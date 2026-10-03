@@ -1,0 +1,20 @@
+Model Name: Random Forest
+Test Accuracy: 100.00%
+Precision: 100.00%
+Recall: 100.00%
+F1-Score: 100.00%
+ROC-AUC: 1.0000
+
+Confusion Matrix:
+TN: 150 | FP: 0
+FN: 0 | TP: 150
+
+Classification Report:
+              precision    recall  f1-score   support
+
+    Safe (0)     1.0000    1.0000    1.0000       150
+Phishing (1)     1.0000    1.0000    1.0000       150
+
+    accuracy                         1.0000       300
+   macro avg     1.0000    1.0000    1.0000       300
+weighted avg     1.0000    1.0000    1.0000       300

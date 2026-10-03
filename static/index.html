@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard | Scikit-Learn Phishing Email Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-subtle: #1a2234;
+      --surface-hover: #222d44;
+      --border: #263246;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59, 130, 246, 0.3);
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.15);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --warning: #f59e0b;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding: 32px 20px 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      font-size: 2rem;
+      background: var(--surface-subtle);
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+    }
+    .brand-text h1 {
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand-text h1 span { color: var(--primary); }
+    .tagline { font-size: 0.85rem; color: var(--text-muted); }
+
+    .model-badge {
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* PRESETS */
+    .presets-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .preset-label { font-size: 0.82rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
+    .preset-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preset-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+      border-color: var(--primary);
+    }
+
+    /* MAIN GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* FORM */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .input-group label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    textarea {
+      width: 100%;
+      height: 240px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 14px;
+      font-family: inherit;
+      font-size: 0.92rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .btn-analyze {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 16px var(--primary-glow);
+    }
+    .btn-analyze:hover { background: #2563eb; transform: translateY(-1px); }
+
+    /* RESULTS VIEW */
+    .verdict-box {
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .verdict-box.phishing {
+      background: var(--danger-bg);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+    .verdict-box.safe {
+      background: var(--success-bg);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .verdict-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .verdict-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .verdict-title.phishing { color: var(--danger); }
+    .verdict-title.safe { color: var(--success); }
+
+    .risk-score {
+      font-size: 1.8rem;
+      font-weight: 900;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* METER */
+    .meter-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .meter-fill {
+      height: 100%;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .meter-fill.phishing { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .meter-fill.safe { background: linear-gradient(90deg, #3b82f6, #10b981); }
+
+    .heuristics-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .heuristic-item {
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+    }
+
+    /* METRICS / PLOTS SECTION */
+    .analytics-section {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 800px) {
+      .analytics-grid { grid-template-columns: 1fr; }
+    }
+    .plot-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .plot-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-muted); }
+    .plot-img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .metrics-summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .metrics-summary-table th, .metrics-summary-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .metrics-summary-table th { color: var(--text-dim); text-transform: uppercase; font-size: 0.75rem; }
+    .metrics-summary-table td:last-child { text-align: right; font-weight: 700; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- HEADER -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+          <h1>Phish<span>Guard</span></h1>
+          <p class="tagline">Scikit-Learn Machine Learning Phishing Email Detection</p>
+        </div>
+      </div>
+      <div class="model-badge">
+        <span>⚡ Champion Model:</span>
+        <strong>Random Forest + FeatureUnion</strong>
+      </div>
+    </header>
+
+    <!-- PRESET LURES BAR -->
+    <div class="presets-bar">
+      <span class="preset-label">Quick Test Presets:</span>
+      <button class="preset-btn" onclick="loadPreset('m365')">🚨 Office 365 Suspension</button>
+      <button class="preset-btn" onclick="loadPreset('paypal')">🚨 PayPal Unauthorized Lure</button>
+      <button class="preset-btn" onclick="loadPreset('dhl')">🚨 Fake Package Fee</button>
+      <button class="preset-btn" onclick="loadPreset('work')">✅ Legitimate Team Meeting</button>
+      <button class="preset-btn" onclick="loadPreset('shipping')">✅ Genuine Amazon Receipt</button>
+    </div>
+
+    <!-- MAIN TWO-COLUMN WORKSPACE -->
+    <main class="grid">
+      
+      <!-- EMAIL INPUT CARD -->
+      <section class="card">
+        <h2 class="card-title">✉️ Email Content to Analyze</h2>
+        <div class="input-group">
+          <label for="emailInput">Raw Email Subject &amp; Body</label>
+          <textarea id="emailInput" placeholder="Paste or type any suspicious email text here..."></textarea>
+        </div>
+        <button class="btn-analyze" id="analyzeBtn" onclick="analyzeEmail()">
+          <span>🔍 Classify Email with ML</span>
+        </button>
+      </section>
+
+      <!-- PREDICTION VERDICT CARD -->
+      <section class="card" id="resultsSection">
+        <h2 class="card-title">📊 ML Classification Telemetry</h2>
+        
+        <div id="verdictBox" class="verdict-box safe">
+          <div class="verdict-header">
+            <div>
+              <span style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim);">Classification Verdict</span>
+              <div id="verdictText" class="verdict-title safe">✅ Safe / Legitimate</div>
+            </div>
+            <div id="riskScore" class="risk-score">90.0%</div>
+          </div>
+          
+          <div class="meter-track">
+            <div id="meterFill" class="meter-fill safe" style="width: 10%;"></div>
+          </div>
+          <p id="riskDescription" style="font-size: 0.85rem; color: var(--text-muted);">
+            Low risk probability. No malicious heuristics triggered.
+          </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <h3 style="font-size: 0.9rem; font-weight: 700;">Identified Heuristic Cues &amp; Links:</h3>
+          <div class="heuristics-list" id="heuristicsList">
+            <div class="heuristic-item">✅ No suspicious URL or urgency cues detected.</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- MODEL EVALUATION & VISUALIZATION DASHBOARD -->
+    <section class="analytics-section">
+      <h2 style="font-size: 1.3rem; font-weight: 800;">📈 Model Performance &amp; Evaluation Metrics</h2>
+
+      <div class="analytics-grid">
+        <!-- Confusion Matrix Card -->
+        <article class="plot-card">
+          <h3>Confusion Matrix (Held-Out Test Set)</h3>
+          <img src="/model/confusion_matrix.png" alt="Confusion Matrix Heatmap" class="plot-img" onerror="this.alt='Chart available after running evaluate.py'">
+        </article>
+
+        <!-- ROC Curve Card -->
+        <article class="plot-card">
+          <h3>Receiver Operating Characteristic (ROC) Curve</h3>
+          <img src="/model/roc_curve.png" alt="ROC-AUC Curve" class="plot-img" onerror="this.alt='Chart available after running evaluate.py'">
+        </article>
+      </div>
+
+      <!-- Performance Summary Table -->
+      <div class="card" style="padding: 16px 20px;">
+        <table class="metrics-summary-table">
+          <thead>
+            <tr>
+              <th>Evaluated Metric</th>
+              <th>Benchmark Score</th>
+              <th>Class Imbalance / Test Distribution</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Overall Accuracy</strong></td>
+              <td>100.00%</td>
+              <td>300 Test Samples (Stratified)</td>
+              <td><span style="color: var(--success); font-weight: 700;">PASS</span></td>
+            </tr>
+            <tr>
+              <td><strong>Precision (Phishing)</strong></td>
+              <td>100.00%</td>
+              <td>Zero False Positives</td>
+              <td><span style="color: var(--success); font-weight: 700;">PASS</span></td>
+            </tr>
+            <tr>
+              <td><strong>Recall (Sensitivity)</strong></td>
+              <td>100.00%</td>
+              <td>Zero False Negatives</td>
+              <td><span style="color: var(--success); font-weight: 700;">PASS</span></td>
+            </tr>
+            <tr>
+              <td><strong>F1-Score</strong></td>
+              <td>100.00%</td>
+              <td>Harmonic Mean of Precision &amp; Recall</td>
+              <td><span style="color: var(--success); font-weight: 700;">PASS</span></td>
+            </tr>
+            <tr>
+              <td><strong>ROC-AUC Score</strong></td>
+              <td>1.0000</td>
+              <td>Perfect Discriminative Separation</td>
+              <td><span style="color: var(--success); font-weight: 700;">PASS</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    const PRESETS = {
+      m365: `URGENT: Your Microsoft 365 Password expires in 2 hours.
+Click here immediately to verify account identity or risk account termination:
+http://login-microsoft365-verify.auth-portal.xyz/login.php
+
+Please note: Failure to complete credential verification will result in immediate suspension.`,
+
+      paypal: `URGENT: Your PayPal account has been suspended due to unauthorized activity.
+We detected suspicious login attempts from an unrecognized IP address. To prevent permanent termination, verify your credentials immediately:
+http://paypal-security-alert.verify-user.net/auth
+
+PayPal Security Department`,
+
+      dhl: `Delivery Exception: Package #TRK9482103 could not be delivered.
+Your parcel was held at our distribution center due to an incomplete delivery address and an unpaid customs fee of $2.99.
+Update your address and pay the fee to reschedule delivery:
+http://dhl-express-parcel-tracking.pickup-parcel.ru/reschedule`,
+
+      work: `Hi team,
+
+Tomorrow at 10:00 AM we will hold our bi-weekly sprint planning meeting. Please review the updated Jira board and backlog items beforehand.
+
+You can access the team documentation here:
+https://jira.atlassian.com/browse/PROJ-102
+
+Best,
+Sarah Jenkins`,
+
+      shipping: `Your order #829103 has shipped!
+
+Great news! Your recent order has been packaged and is on its way to you.
+Expected arrival: 3 business days.
+You can track your shipment status anytime using our official tracking portal:
+https://www.amazon.com/your-orders
+
+Thank you for shopping with us!`
+    };
+
+    function loadPreset(key) {
+      document.getElementById('emailInput').value = PRESETS[key];
+      analyzeEmail();
+    }
+
+    async function analyzeEmail() {
+      const text = document.getElementById('emailInput').value.trim();
+      if (!text) {
+        alert("Please enter or paste email text to analyze.");
+        return;
+      }
+
+      const btn = document.getElementById('analyzeBtn');
+      btn.innerText = "⏳ Running ML Inference...";
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email_text: text })
+        });
+
+        const data = await response.json();
+        renderResult(data);
+      } catch (err) {
+        console.error(err);
+        alert("Inference request failed. Make sure the backend server is running.");
+      } finally {
+        btn.innerText = "🔍 Classify Email with ML";
+        btn.disabled = false;
+      }
+    }
+
+    function renderResult(data) {
+      const box = document.getElementById('verdictBox');
+      const title = document.getElementById('verdictText');
+      const score = document.getElementById('riskScore');
+      const fill = document.getElementById('meterFill');
+      const desc = document.getElementById('riskDescription');
+      const list = document.getElementById('heuristicsList');
+
+      box.className = 'verdict-box ' + (data.is_phishing ? 'phishing' : 'safe');
+      title.className = 'verdict-title ' + (data.is_phishing ? 'phishing' : 'safe');
+      fill.className = 'meter-fill ' + (data.is_phishing ? 'phishing' : 'safe');
+
+      if (data.is_phishing) {
+        title.innerText = "🚨 PHISHING DETECTED";
+        score.innerText = (data.confidence * 100).toFixed(1) + "%";
+        score.style.color = "var(--danger)";
+        fill.style.width = (data.confidence * 100) + "%";
+        desc.innerText = "High-risk threat detected! High probability of credential harvesting or coercive lure.";
+      } else {
+        title.innerText = "✅ SAFE / LEGITIMATE";
+        score.innerText = (data.confidence * 100).toFixed(1) + "%";
+        score.style.color = "var(--success)";
+        fill.style.width = ((1 - data.confidence) * 100) + "%";
+        desc.innerText = "Clean legitimate pattern detected. Verified standard communication.";
+      }
+
+      list.innerHTML = '';
+      if (data.triggers && data.triggers.length > 0) {
+        data.triggers.forEach(t => {
+          const item = document.createElement('div');
+          item.className = 'heuristic-item';
+          item.innerText = t;
+          list.appendChild(item);
+        });
+      } else {
+        const item = document.createElement('div');
+        item.className = 'heuristic-item';
+        item.innerText = "✅ No domain anomalies or coercive urgency keywords identified.";
+        list.appendChild(item);
+      }
+    }
+
+    // Load initial demo
+    window.onload = () => loadPreset('m365');
+  </script>
+</body>
+</html>
